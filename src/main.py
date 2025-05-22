@@ -28,10 +28,22 @@ def main(page: ft.Page):
         ],
         rows=[],
         expand=True,
-        heading_row_color="#052b47",
+        heading_row_color="#138db8",
 
     )
-
+    # Ventana de alerta 
+    dlg_modal = ft.AlertDialog(
+        modal=True,
+        
+        content=ft.Text("EL PRODUCTO YA HA SIDO REGISTRADO", color=ft.colors.RED, size=20, weight=ft.FontWeight.BOLD),
+        actions=[
+            Button_(on_click=lambda e: page.close(dlg_modal), text="ELIMINAR", color="#052b47", height=60, width=100).create(),
+            Button_(on_click=lambda e: page.close(dlg_modal), text="REGISTRAR NUEVAMENTE", color="#052b47", height=60, width=125).create(),
+        ],
+        actions_alignment=ft.MainAxisAlignment.END,
+        on_dismiss=lambda e: print("Modal dialog dismissed!"),
+    )
+    ejemplo_btn = ft.ElevatedButton("Open modal dialog", on_click=lambda e: page.open(dlg_modal))
     # Función para procesar escaneo
     def send(_):
         nonlocal info_qr, table_rows, registros
@@ -151,6 +163,7 @@ def main(page: ft.Page):
     # Agrega todos los elementos a la página
     page.add(
         fila_contenido,
+        ejemplo_btn,
         fila_texto,
         ft.Row([
             data_table
