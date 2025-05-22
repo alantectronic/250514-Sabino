@@ -3,62 +3,100 @@ from components import AppBar_, TextField_, Button_, Text_
 import os
 import config
 from helpers import list_active_printers, extract_data
+import pandas as pd
+from datetime import datetime
 
 def main(page: ft.Page):
     info_qr = {}
-    registros = []  # Lista que guarda todos los datos escaneados
-    table_rows = []  # Lista de filas para la tabla
+    registros = []
+    table_rows = []
 
-    def onChange_PRINTER(e):
-        global printer_name
-        printer_name = e.control.value
-        page.update()
+    snackbar = ft.SnackBar(content=ft.Text(""), open=False)
 
-    def toggle_printer_select():
-        printer_select.visible = not printer_select.visible
-        page.update()
-
-    # Tabla vacía inicial
+    # Tabla con encabezados
     data_table = ft.DataTable(
         columns=[
+            ft.DataColumn(ft.Text("ID", color=ft.Colors.WHITE)),
             ft.DataColumn(ft.Text("Producto", color=ft.Colors.WHITE, expand=True)),
             ft.DataColumn(ft.Text("Color", color=ft.Colors.WHITE, expand=True)),
-            ft.DataColumn(ft.Text("Peso (KG)", color=ft.Colors.WHITE, expand=True)),
+            ft.DataColumn(ft.Text("Peso (kg)", color=ft.Colors.WHITE, expand=True)),
             ft.DataColumn(ft.Text("Lote", color=ft.Colors.WHITE, expand=True)),
+            ft.DataColumn(ft.Text("Fecha", color=ft.Colors.WHITE)),
+            ft.DataColumn(ft.Text("Hora", color=ft.Colors.WHITE)),
         ],
         rows=[],
         expand=True,
         heading_row_color="#052b47",
-
     )
 
-    # Función para procesar escaneo
+    # Función principal al presionar ENVIAR
     def send(_):
         nonlocal info_qr, table_rows, registros
         info_qr = extract_data(input_codigo.value)
 
         if info_qr:
+            now = datetime.now()
+            info_qr["Fecha"] = now.strftime("%Y-%m-%d")
+            info_qr["Hora"] = now.strftime("%H:%M:%S")
             registros.append(info_qr)
+            current_id = len(registros)
 
-            # Añadir nueva fila
             new_row = ft.DataRow(
                 cells=[
+                    ft.DataCell(ft.Text(str(current_id))),
                     ft.DataCell(ft.Text(info_qr.get("Producto", ""), expand=True)),
                     ft.DataCell(ft.Text(info_qr.get("Color", ""), expand=True)),
                     ft.DataCell(ft.Text(str(info_qr.get("Peso", "")))),
                     ft.DataCell(ft.Text(info_qr.get("Lote", ""), expand=True)),
+                    ft.DataCell(ft.Text(info_qr.get("Fecha", ""))),
+                    ft.DataCell(ft.Text(info_qr.get("Hora", ""))),
                 ]
             )
             table_rows.append(new_row)
             data_table.rows = table_rows
 
-            # Actualizar resumen
             producto_texto.value = f"PRODUCTOS ESCANEADOS: {len(registros)}"
             peso_total = sum(item.get("Peso", 0) for item in registros)
-            peso_texto.value = f"PESO TOTAL: {peso_total:.3f} KG"
+            peso_texto.value = f"PESO TOTAL: {peso_total:.3f} kg"
 
         input_codigo.value = ""
         input_codigo.focus()
+        page.update()
+
+    # Función para exportar a Excel
+    def export():
+        nonlocal registros, table_rows
+        if not registros:
+            return
+
+        if not os.path.exists("reportes"):
+            os.makedirs("reportes")
+
+        df = pd.DataFrame(registros)
+        df.insert(0, "ID", range(1, len(df) + 1))
+
+        resumen = {
+            "Total de productos escaneados": [len(registros)],
+            "Suma total de peso (kg)": [sum(item.get("Peso", 0) for item in registros)]
+        }
+        df_resumen = pd.DataFrame(resumen)
+
+        fecha = datetime.now().strftime("%Y%m%d_%H%M%S")
+        ruta_archivo = f"reportes/reporte_{fecha}.xlsx"
+
+        with pd.ExcelWriter(ruta_archivo, engine='openpyxl') as writer:
+            df.to_excel(writer, sheet_name="Registros", index=False)
+            df_resumen.to_excel(writer, sheet_name="Resumen", index=False)
+
+        registros.clear()
+        table_rows.clear()
+        data_table.rows = []
+        producto_texto.value = "PRODUCTOS ESCANEADOS: 0"
+        peso_texto.value = "PESO TOTAL: 0.000 kg"
+
+        # Mostrar confirmación
+        snackbar.content.value = f"Reporte exportado exitosamente como {ruta_archivo}"
+        page.open(snackbar)
         page.update()
 
     # Inputs y botones
@@ -67,9 +105,8 @@ def main(page: ft.Page):
     input_codigo.width = 700
 
     send_button = Button_(on_click=lambda _: send(_), text="ENVIAR", color="#052b47", height=50, width=100).create()
-
     exportar_button = Button_(
-        on_click=lambda _: print("Exportar no implementado aún"),
+        on_click=lambda _: export(),
         icon=ft.Icons.DOWNLOAD,
         icon_color="052b47",
         text="EXPORTAR",
@@ -78,33 +115,19 @@ def main(page: ft.Page):
         width=150
     ).create()
 
-    # Selección de impresora
-    printer_icon_button = ft.IconButton(
-        icon=ft.icons.PRINT,
+   
+
+    ayuda_button = ft.TextButton(
+        "AYUDA",
+        icon=ft.Icons.HELP_ROUNDED,
         icon_color=ft.Colors.WHITE,
-        tooltip="Configurar impresora",
-        on_click=lambda e: toggle_printer_select()
+        style=ft.ButtonStyle(color=ft.Colors.WHITE)
     )
 
-    printers = list_active_printers()
-    printer = ""
-    printers_list = [ft.dropdown.Option(i) for i in printers]
-
-    printer_select = ft.Dropdown(
-        options=printers_list,
-        on_change=onChange_PRINTER,
-        value=printer,
-        label="Selecciona Impresora",
-        label_style={"color": ft.Colors.WHITE},
-        width=250,
-        border_color=ft.Colors.WHITE,
-    )
-
-    ayuda_button = ft.TextButton("AYUDA", icon=ft.Icons.HELP_ROUNDED, icon_color=ft.Colors.WHITE, style=ft.ButtonStyle(color=ft.Colors.WHITE))
-
-    # Appbar y bottom bar
+    # Appbar y bottom
     page.appbar = AppBar_(
-        controls=[printer_icon_button, printer_select, ayuda_button], name="SAN FRANCISCO TEXTIL"
+        controls=[ayuda_button],
+        name="SAN FRANCISCO TEXTIL"
     ).create()
 
     page.bottom_appbar = ft.BottomAppBar(
@@ -120,41 +143,29 @@ def main(page: ft.Page):
         )
     )
 
-    # Fila superior
     fila_contenido = ft.Row(
-        controls=[
-            ft.Row([input_codigo, send_button], spacing=10),
-            ft.Container(expand=True),
-            exportar_button
-        ],
+        controls=[ft.Row([input_codigo, send_button], spacing=10), ft.Container(expand=True), exportar_button],
         alignment=ft.MainAxisAlignment.START,
         vertical_alignment=ft.CrossAxisAlignment.CENTER
     )
 
-    # Texto resumen
-    producto_texto = Text_(value="PRODUCTOS ESCANEADOS: ", color="#052b47", size=30).create()
-    peso_texto = Text_(value="PESO TOTAL: ", color="#052b47", size=30).create()
+    producto_texto = Text_(value="PRODUCTOS ESCANEADOS: 0", color="#052b47", size=30).create()
+    peso_texto = Text_(value="PESO TOTAL: 0.000 kg", color="#052b47", size=30).create()
 
     fila_texto = ft.Container(
         ft.Row(
-            controls=[
-                producto_texto,
-                peso_texto
-            ],
+            controls=[producto_texto, peso_texto],
             alignment=ft.MainAxisAlignment.END,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
             spacing=150
         ),
         padding=ft.padding.only(right=50, top=25)
     )
-
-    # Agrega todos los elementos a la página
+    page.title = "GENERADOR DE REPORTES - SAN FRANCISCO TEXTIL"
     page.add(
         fila_contenido,
         fila_texto,
-        ft.Row([
-            data_table
-        ], expand=True, vertical_alignment=ft.CrossAxisAlignment.START)
+        ft.Row([data_table], expand=True, vertical_alignment=ft.CrossAxisAlignment.START)
     )
 
 ft.app(main)
