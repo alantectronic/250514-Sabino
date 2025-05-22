@@ -39,11 +39,13 @@ class AppBar_():
 
     
 class TextField_:
-    def __init__(self,  label: str):
+    def __init__(self,  on_sumit, label: str):
         self.label = label
+        self.on_sumit = on_sumit
      
     def create(self):
         return ft.TextField(
+        on_submit=self.on_sumit,
         expand=True,
         label=self.label,
         label_style={"color": color_tectronic},
@@ -52,20 +54,21 @@ class TextField_:
     )
 
 class Button_():
-    def __init__(self, on_click, text: str, color:ft.Colors, icon=ft.Icons, width=None, height=None):
+    def __init__(self, on_click, text: str, color:ft.Colors, icon=ft.Icons, width=None, height=None, icon_color=ft.Colors.BLACK):
         self.text = text
         self.icon = icon
         self.on_click = on_click
         self.color = color
         self.width = width
         self.height = height
+        self.icon_color = icon_color
 
     def create(self):
         return ft.ElevatedButton(
         col={"sm": 6, "md": 4, "xl": 2},
         text=self.text,
         on_click=self.on_click,
-        icon_color=ft.Colors.WHITE,
+        icon_color=self.icon_color,
         bgcolor= ft.Colors.WHITE,
         color= self.color,
         icon= self.icon,
@@ -74,7 +77,7 @@ class Button_():
             side={"": ft.BorderSide(1,self.color)}
         ),
         width=self.width,
-        height=self.height
+        height=self.height,
 
 )
     

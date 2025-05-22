@@ -1,5 +1,7 @@
 import json
 import platform
+import subprocess
+import re
 def read_json(path):
     """
     Reads a JSON file and returns a dictionary with the data and a boolean
@@ -66,5 +68,30 @@ def list_active_printers():
             return []
     else:
         return []
-def validate_code():
-    pass
+    
+
+def extract_data(text):
+    data = {}
+
+    # Extraer Producto
+    match_product = re.search(r'Producto:\s*(.+?)\s*Color:', text)
+    if match_product:
+        data["Producto"] = match_product.group(1).strip()
+
+    # Extraer Color
+    match_color = re.search(r'Color:\s*(.+?)\s*\d+\s*[\d.]+KG', text)
+    if match_color:
+        data["Color"] = match_color.group(1).strip()
+
+    # Extraer Peso (antes de 'KG', toma el número)
+    match_weight = re.search(r'([\d.]+)\s*KG', text)
+    if match_weight:
+        data["Peso"] = float(match_weight.group(1))
+
+    # Extraer Lote
+    match_lot = re.search(r'LOTE:\s*(\d+)', text)
+    if match_lot:
+        data["Lote"] = match_lot.group(1)
+
+    return data
+
