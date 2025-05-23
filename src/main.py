@@ -2,16 +2,18 @@ import flet as ft
 from components import AppBar_, TextField_, Button_, Text_
 import os
 import config
-from helpers import list_active_printers, extract_data
+from helpers import extract_data
 import pandas as pd
 from datetime import datetime
+import webbrowser
 
 def main(page: ft.Page):
     info_qr = {}
     registros = []
     table_rows = []
+    ruta_archivo = ""
 
-    snackbar = ft.SnackBar(content=ft.Text(""), open=False)
+    snackbar = ft.SnackBar(content=ft.Row(height=40), open=False, duration=10000)
 
     # Tabla con encabezados
     data_table = ft.DataTable(
@@ -65,7 +67,7 @@ def main(page: ft.Page):
 
     # Función para exportar a Excel
     def export():
-        nonlocal registros, table_rows
+        nonlocal registros, table_rows, ruta_archivo
         if not registros:
             return
 
@@ -95,9 +97,19 @@ def main(page: ft.Page):
         peso_texto.value = "PESO TOTAL: 0.000 kg"
 
         # Mostrar confirmación
-        snackbar.content.value = f"Reporte exportado exitosamente como {ruta_archivo}"
+        
+        snackbar.content = ft.Row(
+            [ft.Text(value= f"Reporte exportado exitosamente como {ruta_archivo}", size=12),
+             ft.TextButton(text="Ver", on_click=view_excel, style=ft.ButtonStyle(color=ft.Colors.WHITE), height=30)
+            ]
+        )
         page.open(snackbar)
         page.update()
+
+    def view_excel(e):
+        nonlocal ruta_archivo
+        os.startfile(os.path.abspath(ruta_archivo) if os.path.exists(ruta_archivo) else ruta_archivo)
+
 
     # Inputs y botones
     input_codigo = TextField_(label="Información del QR", on_sumit=send).create()
