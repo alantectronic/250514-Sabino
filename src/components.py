@@ -54,7 +54,7 @@ class TextField_:
     )
 
 class Button_():
-    def __init__(self, on_click, text: str, color:ft.Colors, icon=ft.Icons, width=None, height=None, icon_color=ft.Colors.BLACK):
+    def __init__(self, on_click, text: str, color:ft.Colors,bgcolor: ft.Colors,brdcolor: ft.Colors, icon=ft.Icons, width=None, height=None, icon_color=ft.Colors.BLACK):
         self.text = text
         self.icon = icon
         self.on_click = on_click
@@ -62,6 +62,8 @@ class Button_():
         self.width = width
         self.height = height
         self.icon_color = icon_color
+        self.bgcolor = bgcolor
+        self.brdcolor = brdcolor
 
     def create(self):
         return ft.ElevatedButton(
@@ -69,12 +71,12 @@ class Button_():
         text=self.text,
         on_click=self.on_click,
         icon_color=self.icon_color,
-        bgcolor= ft.Colors.WHITE,
+        bgcolor= self.bgcolor,
         color= self.color,
         icon= self.icon,
         style=ft.ButtonStyle(
             shape=ft.RoundedRectangleBorder(radius=30),
-            side={"": ft.BorderSide(1,self.color)}
+            side={"": ft.BorderSide(1,self.brdcolor)},
         ),
         width=self.width,
         height=self.height,

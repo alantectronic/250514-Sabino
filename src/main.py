@@ -17,6 +17,12 @@ def main(page: ft.Page):
 
     # Tabla con encabezados
     data_table = ft.DataTable(
+        border=ft.border.all(2, "#052b47"),
+        vertical_lines=ft.border.BorderSide(3, "#052b47"),
+        horizontal_lines=ft.border.BorderSide(1, "#052b47"),
+        bgcolor="#138db8",
+        data_row_color= ft.colors.WHITE,
+        
         columns=[
             ft.DataColumn(ft.Text("ID", color=ft.Colors.WHITE)),
             ft.DataColumn(ft.Text("Producto", color=ft.Colors.WHITE, expand=True)),
@@ -28,7 +34,8 @@ def main(page: ft.Page):
         ],
         rows=[],
         expand=True,
-        heading_row_color="#052b47",
+        heading_text_style=ft.TextStyle( size=20, weight=ft.FontWeight.BOLD),
+        data_text_style=ft.TextStyle(color="#052b47", size=14, weight=ft.FontWeight.BOLD),
     )
 
     # Función principal al presionar ENVIAR
@@ -116,13 +123,15 @@ def main(page: ft.Page):
     input_codigo.border_radius = 30
     input_codigo.width = 700
 
-    send_button = Button_(on_click=lambda _: send(_), text="ENVIAR", color="#052b47", height=50, width=100).create()
+    send_button = Button_(on_click=lambda _: send(_), text="ENVIAR", color="#052b47",bgcolor=ft.Colors.WHITE,brdcolor="#052b47", height=50, width=100).create()
     exportar_button = Button_(
         on_click=lambda _: export(),
         icon=ft.Icons.DOWNLOAD,
         icon_color="052b47",
         text="EXPORTAR",
         color="#052b47",
+        bgcolor=ft.Colors.WHITE,
+        brdcolor="#052b47",
         height=50,
         width=150
     ).create()
@@ -135,6 +144,21 @@ def main(page: ft.Page):
         icon_color=ft.Colors.WHITE,
         style=ft.ButtonStyle(color=ft.Colors.WHITE)
     )
+
+    #AlertDialog
+    alert_repeat = ft.AlertDialog(
+        modal=True,
+        content=ft.Text("EL PRODUCTO YA HA SIDO REGISTRADO", size=25, weight="bold", color="#052b47"),
+        actions=[
+            Button_(on_click=lambda e: page.close(alert_repeat), text="ELIMINAR", color=ft.colors.WHITE,bgcolor=ft.Colors.GREEN,brdcolor=ft.Colors.GREEN, height=50, width=100).create(),
+            Button_(on_click=lambda e: page.close(alert_repeat), text="REGISTRAR", color=ft.colors.WHITE,bgcolor=ft.Colors.RED,brdcolor=ft.Colors.RED, height=50, width=120).create(),
+    
+        ],
+        actions_alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+        on_dismiss=lambda e: print("Modal dialog dismissed!"),
+    )
+    example_button =ft.ElevatedButton("ALERTA", on_click=lambda e: page.open(alert_repeat))
+    page.add(example_button)
 
     # Appbar y bottom
     page.appbar = AppBar_(
@@ -177,6 +201,7 @@ def main(page: ft.Page):
     page.add(
         fila_contenido,
         fila_texto,
+
         ft.Row([data_table], expand=True, vertical_alignment=ft.CrossAxisAlignment.START)
     )
 
