@@ -42,6 +42,9 @@ class TextField_:
     def __init__(self,  on_sumit, label: str):
         self.label = label
         self.on_sumit = on_sumit
+
+    def focus(self):
+        self.create().focus()
      
     def create(self):
         return ft.TextField(
